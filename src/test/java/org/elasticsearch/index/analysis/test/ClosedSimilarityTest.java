@@ -13,6 +13,7 @@ import java.util.Collection;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.SearchHit;
@@ -151,10 +152,7 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
                                                             "postalCode", 52341)
                 .execute().actionGet();
 
-        SearchResponse response = client().prepareSearch().setQuery(matchQuery("_all", "kanfanar cista provo 52341 ulica dobriše cesarića 21")).execute().actionGet();
+        SearchResponse response = client().prepareSearch().setQuery(boolQuery().should(matchQuery("_all", "kanfanar cista provo 52341 ulica dobriše cesarića 21"))).execute().actionGet();
         System.out.println("\n\n Response: "+response.toString()+"\n\n");
-
-        SearchResponse response2 = client().prepareSearch().setQuery(matchQuery("_all", "kanfanar cista provo 52341 ulica dobriše cesarića 21")).execute().actionGet();
-        System.out.println("\n\n Response: "+response2.toString()+"\n\n");
      }     
 }
