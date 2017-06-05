@@ -35,12 +35,5 @@
             <version>6.3.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>mmaracic</groupId>
-            <artifactId>ClosedSimilarity</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>test</scope>
-            <type>jar</type>
-        </dependency>
     </dependencies>
 </project>

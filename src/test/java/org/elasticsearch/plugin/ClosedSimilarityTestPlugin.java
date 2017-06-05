@@ -6,7 +6,7 @@
 package org.elasticsearch.plugin;
 
 import org.elasticsearch.index.IndexModule;
-import org.elasticsearch.index.similarity.ClosedSimilarityProvider;
+import org.elasticsearch.index.similarity.ClosedSimilarityMockupProvider;
 import org.elasticsearch.plugins.Plugin;
 
 /**
@@ -16,6 +16,6 @@ import org.elasticsearch.plugins.Plugin;
 public class ClosedSimilarityTestPlugin extends Plugin {
     @Override
     public void onIndexModule(IndexModule indexModule) {
-        indexModule.addSimilarity("closed-similarity", ClosedSimilarityProvider::new);
+        indexModule.addSimilarity("closed-similarity", ClosedSimilarityMockupProvider::new);
 }    
 }

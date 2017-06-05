@@ -336,7 +336,7 @@ public class ClosedSimilarityMockup extends Similarity{
                 log.info("Index norm: "+norm);
                 return norm;
             } catch (IOException ex) {
-                java.util.logging.Logger.getLogger(ClosedSimilarity.class.getName()).log(Level.SEVERE, null, ex);
+                java.util.logging.Logger.getLogger(ClosedSimilarityMockup.class.getName()).log(Level.SEVERE, null, ex);
             }
             return 0f;
         }
