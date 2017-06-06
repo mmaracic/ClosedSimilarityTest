@@ -256,7 +256,7 @@ public class ClosedSimilarityMockup extends Similarity{
                             BytesRefBuilder brb = new BytesRefBuilder();
                             LegacyNumericUtils.intToPrefixCoded(tokenValue, shift, brb);
                             BytesRef br = brb.toBytesRef();
-//                            log.info("Converting integer term: "+tokenValue+" to internal encoding "+br.toString());
+                            log.info("Converting integer term: "+tokenValue+" to internal encoding "+br.toString());
                             term = new Term(field, br);
                             termFreq = indexReader.docFreq(term);
                         } else {
@@ -265,27 +265,27 @@ public class ClosedSimilarityMockup extends Similarity{
                         }
                         if (termFreq>0){
                             fieldFrequency.put(field, termFreq);
-                            //log.info("Term: "+rawTermInfo.getRawToken().utf8ToString()+" frequency: "+termFreq+" in field: "+field);
+                            log.info("Term: "+rawTermInfo.getRawToken().utf8ToString()+" frequency: "+termFreq+" in field: "+field);
                             totalTermFreq+=termFreq;
                         } else {
-//                            log.info("Term: "+term.bytes().utf8ToString()+" frequency is "+termFreq+" in field: "+field);
-//                            StringBuilder info = new StringBuilder("Field: "+field+" Terms: ");
-//                            Terms ts = indexReader.terms(field);
-//                            if (ts!=null){
-//                                TermsEnum tsIt = ts.iterator();
-//                                BytesRef  tsItem = tsIt.next();
-//                                while(tsItem != null){
-//                                    if (attributeType == AttributeType.Integer){
-//                                        int resultNumber = LegacyNumericUtils.prefixCodedToInt(tsItem);
-//                                        info.append(resultNumber+" | ");
-//                                        info.append(tsItem.toString() +" # ");
-//                                    } else {
-//                                        info.append(tsItem+" # ");
-//                                    }
-//                                    tsItem = tsIt.next();
-//                                }
-//                            }
-//                            log.info(info);
+                            log.info("Term: "+term.bytes().utf8ToString()+" frequency is "+termFreq+" in field: "+field);
+                            StringBuilder info = new StringBuilder("Field: "+field+" Terms: ");
+                            Terms ts = indexReader.terms(field);
+                            if (ts!=null){
+                                TermsEnum tsIt = ts.iterator();
+                                BytesRef  tsItem = tsIt.next();
+                                while(tsItem != null){
+                                    if (attributeType == AttributeType.Integer){
+                                        int resultNumber = LegacyNumericUtils.prefixCodedToInt(tsItem);
+                                        info.append(resultNumber+" | ");
+                                        info.append(tsItem.toString() +" # ");
+                                    } else {
+                                        info.append(tsItem+" # ");
+                                    }
+                                    tsItem = tsIt.next();
+                                }
+                            }
+                            log.info(info);
                         }
                         //assigning weight by maximum frequency
                         if (termFreq > maxTermFrequency){
@@ -294,7 +294,7 @@ public class ClosedSimilarityMockup extends Similarity{
                             rawTermInfo.setAttribute(field);
                         }
                     } catch(NumberFormatException ex){
-                        
+                        ex.printStackTrace();
                     }
                 }
                 log.info("Term: "+rawTermInfo.getRawToken().utf8ToString()+" total frequency: "+totalTermFreq);
