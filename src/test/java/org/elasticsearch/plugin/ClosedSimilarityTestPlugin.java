@@ -17,5 +17,5 @@ public class ClosedSimilarityTestPlugin extends Plugin {
     @Override
     public void onIndexModule(IndexModule indexModule) {
         indexModule.addSimilarity("closed-similarity", ClosedSimilarityMockupProvider::new);
-}    
+    }    
 }

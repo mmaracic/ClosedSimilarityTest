@@ -12,6 +12,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
@@ -146,6 +149,17 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
                         .put("similarity.default.attributeTypes.postalCode", "Integer")
                         .put("similarity.default.attributeTypes.settlementName", "String")
                         .put("similarity.default.attributeTypes.countyName", "String")
+
+                        .put("analysis.tokenizer.FrontBackTokenizer.type", "croatian_backfront_tokenizer")
+                        .put("analysis.tokenizer.FrontBackTokenizer.takeBack", 0)
+                        .put("analysis.tokenizer.FrontBackTokenizer.takeFront", 3)
+                        
+                        .put("analysis.analyzer.cro_analyzer.type","custom")
+                        .put("analysis.analyzer.cro_analyzer.tokenizer","FrontBackTokenizer")
+                        .put("analysis.analyzer.cro_analyzer.filter","lowercase")
+                        
+                        .put("analysis.analyzer.text_number_analyzer.type","custom")
+                        .put("analysis.analyzer.text_number_analyzer.tokenizer","croatian_number_tokenizer")
                 ).execute().actionGet();
         
                 Map<String, Object> attributeMap  = new HashMap<>();
@@ -159,10 +173,18 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
         IndexResponse iResponse = client().prepareIndex("test", "Address", "1").setSource(attributeMap)
                 .execute().actionGet();
         
+        try {
+            System.out.println("Waiting for the cluster to stabilize.");
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(ClosedSimilarityTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        ClusterHealthRequestBuilder healthRequest = client().admin().cluster().prepareHealth();
+        
         System.out.println("\n\n Index response: "+iResponse.toString()+"\n\n");
 
-        SearchResponse response = client().prepareSearch().setQuery(matchAllQuery()).execute().actionGet();
-        System.out.println("\n\n Response: "+response.toString()+"\n\n");
+        SearchResponse response = client().prepareSearch().setIndices("test").setTypes("Address").setQuery(matchAllQuery()).execute().actionGet();
+        System.out.println("\n\n All response: "+response.toString()+"\n\n");
 
         SearchResponse response2 = client().prepareSearch().setQuery(boolQuery().should(matchQuery("_all", "kanfanar cista provo 52341 ulica dobriše cesarića 21"))).execute().actionGet();
         System.out.println("\n\n Response: "+response2.toString()+"\n\n");
