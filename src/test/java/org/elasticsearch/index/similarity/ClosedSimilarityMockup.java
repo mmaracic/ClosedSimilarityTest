@@ -16,6 +16,9 @@ import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.SortedNumericDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
@@ -125,7 +128,7 @@ public class ClosedSimilarityMockup extends Similarity{
                 strTerm = stat.term().utf8ToString();
             }
             termIdfs.put(strTerm, qti);
-//            log.info("Query term: "+stat.term().utf8ToString()+" Binary: "+stat.term().toString()+" frequency: "+df+" Appearance: "+df);
+            log.info("Query term: "+stat.term().utf8ToString()+" Binary: "+stat.term().toString()+" frequency: "+df+" Appearance: "+df);
             desc += stat.term().utf8ToString() + " # ";
         }
         log.info("Creating sim weight for field: "+desc);
@@ -259,6 +262,11 @@ public class ClosedSimilarityMockup extends Similarity{
                             log.info("Converting integer term: "+tokenValue+" to internal encoding "+br.toString());
                             term = new Term(field, br);
                             termFreq = indexReader.docFreq(term);
+                            int docsCount = indexReader.getDocCount(field);
+                            long ttf = indexReader.totalTermFreq(term);
+                            
+                            NumericDocValues pe = indexReader.getNumericDocValues(field);
+                            log.info("termFreq: "+termFreq+" docsCount: "+docsCount+" ttf: "+ttf);
                         } else {
                             term = new Term(field, rawTermInfo.getRawToken());
                             termFreq = indexReader.totalTermFreq(term);

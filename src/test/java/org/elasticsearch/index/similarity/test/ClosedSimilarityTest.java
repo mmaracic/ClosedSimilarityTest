@@ -1,4 +1,4 @@
-package org.elasticsearch.index.analysis.test;
+package org.elasticsearch.index.similarity.test;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -6,6 +6,7 @@ package org.elasticsearch.index.analysis.test;
  * and open the template in the editor.
  */
 
+import java.awt.event.ActionListener;
 import org.elasticsearch.plugin.ClosedSimilarityTestPlugin;
 import java.io.IOException;
 import java.util.Arrays;
@@ -14,7 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder;
+import org.elasticsearch.action.fieldstats.FieldStats;
+import org.elasticsearch.action.fieldstats.FieldStatsRequest;
+import org.elasticsearch.action.fieldstats.FieldStatsResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
@@ -22,8 +27,8 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
+import org.elasticsearch.plugin.AnalysisCroatianTestPlugin;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ESIntegTestCase;
 import static org.elasticsearch.test.ESIntegTestCase.client;
 import static org.hamcrest.Matchers.equalTo;
@@ -39,7 +44,7 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
     
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-      return Arrays.asList(ClosedSimilarityTestPlugin.class);
+      return Arrays.asList(ClosedSimilarityTestPlugin.class, AnalysisCroatianTestPlugin.class);
     }
     
 //     @Test
@@ -88,9 +93,8 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
 //        assertThat(bm25Score, not(equalTo(defaultScore)));         
 //     }
      
-     @Test
-     public void testClosedSimilarity() throws IOException
-     {
+    
+    public void fillIndex() throws IOException {
         try {
             client().admin().indices().prepareDelete("test").execute().actionGet();
         } catch (Exception e) {
@@ -169,24 +173,75 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
                 attributeMap.put("streetName", "Ulica Dobriše Cesarića");
                 attributeMap.put("settlementName", "Cista provo");
                 attributeMap.put("postalCode", 52341);
+
+                Map<String, Object> attributeMap2  = new HashMap<>();
+                attributeMap.put("streetNumber", "22");
+                attributeMap.put("streetNumberAlfa", null);
+                attributeMap.put("countyName", "KANFANAR");
+                attributeMap.put("streetName", "Ulica Dobriše Cesarića");
+                attributeMap.put("settlementName", "Cista provo");
+                attributeMap.put("postalCode", 52341);
         
         IndexResponse iResponse = client().prepareIndex("test", "Address", "1").setSource(attributeMap)
                 .execute().actionGet();
+        iResponse = client().prepareIndex("test", "Address", "2").setSource(attributeMap2)
+                .execute().actionGet();
         
+        System.out.println("\n\n Index response: "+iResponse.toString()+"\n\n");
+    }
+    
+     @Test
+     public void testClosedSimilarity() throws IOException
+     {
+        fillIndex();
+         
         try {
             System.out.println("Waiting for the cluster to stabilize.");
-            Thread.sleep(1000);
+            Thread.sleep(5000);
         } catch (InterruptedException ex) {
             Logger.getLogger(ClosedSimilarityTest.class.getName()).log(Level.SEVERE, null, ex);
         }
         ClusterHealthRequestBuilder healthRequest = client().admin().cluster().prepareHealth();
         
-        System.out.println("\n\n Index response: "+iResponse.toString()+"\n\n");
+        String[] fields = {"postalCode"};
+        FieldStatsRequest fsr = new FieldStatsRequest();
+        fsr.setFields(fields);
+        FieldStatsResponse fsrsp = client().fieldStats(fsr).actionGet();
+        Map<String, FieldStats> fsm = fsrsp.getAllFieldStats();
+        FieldStats fs =  fsm.get(fields[0]);
+        String max = fs.getMaxValueAsString();
+        String min = fs.getMinValueAsString();
+        
+        System.out.println("\n\n Field stats min: "+min+" max: "+max+" searchable: "+fs.isSearchable());
 
         SearchResponse response = client().prepareSearch().setIndices("test").setTypes("Address").setQuery(matchAllQuery()).execute().actionGet();
         System.out.println("\n\n All response: "+response.toString()+"\n\n");
 
         SearchResponse response2 = client().prepareSearch().setQuery(boolQuery().should(matchQuery("_all", "kanfanar cista provo 52341 ulica dobriše cesarića 21"))).execute().actionGet();
         System.out.println("\n\n Response: "+response2.toString()+"\n\n");
-     }     
+     }
+     
+//     @Test
+//     public void testIndexing() throws IOException
+//     {
+//        fillIndex();
+//         
+//        try {
+//            System.out.println("Waiting for the cluster to stabilize.");
+//            Thread.sleep(5000);
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(ClosedSimilarityTest.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        
+//        String[] fields = {"postalCode"};
+//        FieldStatsRequest fsr = new FieldStatsRequest();
+//        fsr.setFields(fields);
+//        FieldStatsResponse fsrsp = client().fieldStats(fsr).actionGet();
+//        Map<String, FieldStats> fsm = fsrsp.getAllFieldStats();
+//        FieldStats fs =  fsm.get(fields[0]);
+//        String max = fs.getMaxValueAsString();
+//        String min = fs.getMinValueAsString();
+//        
+//        System.out.println("\n\n Field stats min: "+min+" max: "+max);
+//    }     
 }

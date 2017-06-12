@@ -5,41 +5,37 @@
  */
 package org.elasticsearch.plugin;
 
-import java.util.Collection;
-import java.util.Collections;
-import org.elasticsearch.common.inject.Module;
+import java.util.HashMap;
+import java.util.Map;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.index.IndexSettings;
+import org.elasticsearch.index.analysis.BackFrontTokenizerFactoryMockup;
 import org.elasticsearch.indices.analysis.AnalysisModule;
-import org.elasticsearch.index.analysis.CroatianAnalysisBinderProcessor;
-import org.elasticsearch.indices.analysis.CroatianAnalysisModule;
+import org.elasticsearch.index.analysis.NumberTokenizerFactoryMockup;
+import org.elasticsearch.index.analysis.TokenizerFactory;
+import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 
 /**
  *
  * @author Marijo
  */
-public class AnalysisCroatianTestPlugin extends Plugin{
+public class AnalysisCroatianTestPlugin extends Plugin implements AnalysisPlugin{
     
-    @Override
-    public String name() {
-        return "analysis-croatian";
-    }
-
-    @Override
-    public String description() {
-        return "Croatian analysis support";
-    }
-
-    @Override
-    public Collection<Module> nodeModules() {
-        return Collections.<Module>singletonList(new CroatianAnalysisModule());
-    }
-
     /**
-     * Automatically called with the analysis module.
+     * Override to add additional {@link Tokenizer}s.
+     * @return 
      */
     @Override
-    public void onModule(AnalysisModule module) {
-        module.addProcessor(new CroatianAnalysisBinderProcessor());
-    }
-    
+    public Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> getTokenizers() {
+        Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> tokenizers = new HashMap<>();        
+        tokenizers.put("croatian_backfront_tokenizer", (AnalysisModule.AnalysisProvider<TokenizerFactory>) (IndexSettings indexSettings, Environment environment, String name, Settings settings) -> {
+            return new BackFrontTokenizerFactoryMockup(indexSettings, name, settings);
+        });
+        tokenizers.put("croatian_number_tokenizer", (AnalysisModule.AnalysisProvider<TokenizerFactory>) (IndexSettings indexSettings, Environment environment, String name, Settings settings) -> {
+            return new NumberTokenizerFactoryMockup(indexSettings, name, settings);
+        });
+        return tokenizers;
+    }    
 }
