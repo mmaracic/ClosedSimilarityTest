@@ -17,6 +17,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder;
+import org.elasticsearch.action.explain.ExplainRequest;
+import org.elasticsearch.action.explain.ExplainResponse;
 import org.elasticsearch.action.fieldstats.FieldStats;
 import org.elasticsearch.action.fieldstats.FieldStatsRequest;
 import org.elasticsearch.action.fieldstats.FieldStatsResponse;
@@ -128,6 +130,7 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
                                 .startObject("postalCode")
                                     .field("type", "integer")
                                     .field("store", true)
+                                    .field("index", true)
                                 .endObject()
                                 .startObject("countyName")
                                     .field("type", "text")
@@ -214,11 +217,35 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
         
         System.out.println("\n\n Field stats min: "+min+" max: "+max+" searchable: "+fs.isSearchable());
 
-        SearchResponse response = client().prepareSearch().setIndices("test").setTypes("Address").setQuery(matchAllQuery()).execute().actionGet();
-        System.out.println("\n\n All response: "+response.toString()+"\n\n");
+//        SearchResponse response = client().prepareSearch().setIndices("test").setTypes("Address").setQuery(matchAllQuery()).execute().actionGet();
+//        System.out.println("\n\n All response: "+response.toString()+"\n\n");
+//
+//        SearchResponse response2 = client().prepareSearch().setQuery(boolQuery().should(matchQuery("_all", "kanfanar cista provo ulica dobriše cesarića 21"))).execute().actionGet();
+//        System.out.println("\n\n Response2: "+response2.toString()+"\n\n");
 
-        SearchResponse response2 = client().prepareSearch().setQuery(boolQuery().should(matchQuery("_all", "kanfanar cista provo 52341 ulica dobriše cesarića 21"))).execute().actionGet();
-        System.out.println("\n\n Response: "+response2.toString()+"\n\n");
+        SearchResponse response3 = client().prepareSearch().setQuery(boolQuery()
+                .should(matchQuery("countyName", "kanfanar"))
+                .should(matchQuery("settlementName", "cista provo"))
+                .should(matchQuery("streetName", "ulica dobriše cesarića"))
+                .should(matchQuery("streetNumber", "21"))
+        ).execute().actionGet();
+        System.out.println("\n\n Response3: "+response3.toString()+"\n\n");
+        
+        ExplainResponse response4 = client().explain(new ExplainRequest("test","Address","1").query(boolQuery()
+                .should(matchQuery("countyName", "kanfanar"))
+                .should(matchQuery("settlementName", "cista provo"))
+                .should(matchQuery("streetName", "ulica dobriše cesarića"))
+                .should(matchQuery("streetNumber", "21"))
+        )).actionGet();
+        
+        System.out.println("\n\n Response4: "+response4.getExplanation().toString()+"\n\n");
+        ExplainResponse response5 = client().explain(new ExplainRequest("test","Address","2").query(boolQuery()
+                .should(matchQuery("countyName", "kanfanar"))
+                .should(matchQuery("settlementName", "cista provo"))
+                .should(matchQuery("streetName", "ulica dobriše cesarića"))
+                .should(matchQuery("streetNumber", "21"))
+        )).actionGet();
+        System.out.println("\n\n Response5: "+response5.getExplanation().toString()+"\n\n");
      }
      
 //     @Test

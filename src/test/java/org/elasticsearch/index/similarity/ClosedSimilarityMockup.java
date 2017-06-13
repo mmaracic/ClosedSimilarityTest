@@ -264,8 +264,6 @@ public class ClosedSimilarityMockup extends Similarity{
                             termFreq = indexReader.docFreq(term);
                             int docsCount = indexReader.getDocCount(field);
                             long ttf = indexReader.totalTermFreq(term);
-                            
-                            NumericDocValues pe = indexReader.getNumericDocValues(field);
                             log.info("termFreq: "+termFreq+" docsCount: "+docsCount+" ttf: "+ttf);
                         } else {
                             term = new Term(field, rawTermInfo.getRawToken());
