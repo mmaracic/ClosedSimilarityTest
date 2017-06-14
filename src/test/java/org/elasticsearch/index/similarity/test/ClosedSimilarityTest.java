@@ -220,8 +220,8 @@ public class ClosedSimilarityTest extends ESIntegTestCase{
 //        SearchResponse response = client().prepareSearch().setIndices("test").setTypes("Address").setQuery(matchAllQuery()).execute().actionGet();
 //        System.out.println("\n\n All response: "+response.toString()+"\n\n");
 //
-//        SearchResponse response2 = client().prepareSearch().setQuery(boolQuery().should(matchQuery("_all", "kanfanar cista provo ulica dobriše cesarića 21"))).execute().actionGet();
-//        System.out.println("\n\n Response2: "+response2.toString()+"\n\n");
+        SearchResponse response2 = client().prepareSearch().setQuery(boolQuery().should(matchQuery("_all", "kanfanar cista provo ulica dobriše cesarića 21"))).execute().actionGet();
+        System.out.println("\n\n Response2: "+response2.toString()+"\n\n");
 
         SearchResponse response3 = client().prepareSearch().setQuery(boolQuery()
                 .should(matchQuery("countyName", "kanfanar"))

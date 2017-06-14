@@ -16,9 +16,6 @@ import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.SortedNumericDocValues;
-import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
@@ -75,7 +72,7 @@ public class ClosedSimilarityMockup extends Similarity{
     public float coord(int overlap, int maxOverlap) {
         float coord = maxOverlap;
         log.info("Calculating query coordination. Overlap: "+overlap+" Max overlap: "+maxOverlap+" Value: "+coord);
-        return coord;
+        return 1;
     }
 
     /** Computes the normalization value for a query given the sum of the
@@ -353,7 +350,7 @@ public class ClosedSimilarityMockup extends Similarity{
          * @param termIdfs
          * @return 
          */
-        private float docCoord(int docId, LeafReader indexReader, Map<String, QueryTokenInfo> termInfos){
+        private float docCoord(int docId, String currField, LeafReader indexReader, Map<String, QueryTokenInfo> termInfos){
             log.info("Estimating doc coordination");
             try{
                 Map<String, Long> docTokenFreq = new HashMap<>();
@@ -363,38 +360,40 @@ public class ClosedSimilarityMockup extends Similarity{
                     log.info("No term vectors on any field!");
                 }
                 for(String field: attribWeights.keySet()){
-                    AttributeType attributeType = attribTypes.get(field);
-                    if (attributeType == AttributeType.Integer){
-                        String fValue = indexReader.document(docId).get(field);
-                        if (fValue != null){
-                            docTokenCount++;
-                            log.info("Counting integer field: "+field+" term: "+fValue);
-                            if (docTokenFreq.containsKey(fValue)){
-                                long freq = docTokenFreq.get(fValue);
-                                docTokenFreq.put(fValue, freq+1l);
-                            } else {
-                                docTokenFreq.put(fValue, 1l);
-                            }
-                        }
-                    } else {
-                        Terms terms = indexReader.getTermVector(docId, field);
-                        if (terms != null){
-                            TermsEnum it = terms.iterator();
-                            BytesRef term = it.next();
-                            while(term != null){
-                                String token = term.utf8ToString();
-                                log.info("Counting field: "+field+" term: "+token);
+                    if (field.compareToIgnoreCase(currField)==0 || currField.compareToIgnoreCase("_all")==0){
+                        AttributeType attributeType = attribTypes.get(field);
+                        if (attributeType == AttributeType.Integer){
+                            String fValue = indexReader.document(docId).get(field);
+                            if (fValue != null){
                                 docTokenCount++;
-                                if (docTokenFreq.containsKey(token)){
-                                    long freq = docTokenFreq.get(token);
-                                    docTokenFreq.put(token, freq+1l);
+                                log.info("Counting integer field: "+field+" term: "+fValue);
+                                if (docTokenFreq.containsKey(fValue)){
+                                    long freq = docTokenFreq.get(fValue);
+                                    docTokenFreq.put(fValue, freq+1l);
                                 } else {
-                                    docTokenFreq.put(token, 1l);
+                                    docTokenFreq.put(fValue, 1l);
                                 }
-                                term = it.next();
                             }
                         } else {
-                            log.info("Term vector for field: "+field+" is null!");
+                            Terms terms = indexReader.getTermVector(docId, field);
+                            if (terms != null){
+                                TermsEnum it = terms.iterator();
+                                BytesRef term = it.next();
+                                while(term != null){
+                                    String token = term.utf8ToString();
+                                    log.info("Counting field: "+field+" term: "+token);
+                                    docTokenCount++;
+                                    if (docTokenFreq.containsKey(token)){
+                                        long freq = docTokenFreq.get(token);
+                                        docTokenFreq.put(token, freq+1l);
+                                    } else {
+                                        docTokenFreq.put(token, 1l);
+                                    }
+                                    term = it.next();
+                                }
+                            } else {
+                                log.info("Term vector for field: "+field+" is null!");
+                            }
                         }
                     }
                 }
@@ -438,7 +437,7 @@ public class ClosedSimilarityMockup extends Similarity{
             //scoring
             try {
                 log.info("Scoring: ID of the document: "+doc+" Sloppy frequency: "+freq);
-                float docCoord = docCoord(doc, context.reader(), csw.termInfos);
+                float docCoord = docCoord(doc, csw.field, context.reader(), csw.termInfos);
                 
                 float score = 0;
                 float indexNorm = estimateIndexNorm(context.reader());
